@@ -57,8 +57,9 @@ This project is a basic heater control system implemented on Mega Arduino (using
 
 ## Files
 
-- `main.ino` – Main Arduino code
+- `Code_Heat_controlsystem.txt` – Main Arduino code
 - `README.md` – This file
+- 'upliance_Assignment.pdf'
 
 ## Author
 
