@@ -1,4 +1,3 @@
-# Heater_ControlSystem
 
 # Heater Control System
 
@@ -46,10 +45,12 @@ This project is a basic heater control system implemented on Mega Arduino (using
 - **OVERHEAT**      :- Temperature > 30.0°C  
                       Critical temperature exceeded; heater is turned OFF immediately.
 
+  ## Wokwi Simulation Link:
+  https://wokwi.com/projects/437275160805780481
 
 ## How to Run (Wokwi)
 
-1. Open https://wokwi.com/projects/437275160805780481
+1. Open https:https://wokwi.com
 2. Paste the code into the editor.
 3. Connect the DS18B20 sensor in Wokwi or as per circuit diagram.
 4. Run the simulation and observe the serial monitor.
