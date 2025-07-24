@@ -1,0 +1,123 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+#define ONE_WIRE_BUS 2     // DS18B20 data pin
+#define HEATER_PIN 9       // Heater control pin
+#define LED_PIN 13         
+#define BUZZER_PIN 7       
+
+// Temperature thresholds in °C
+const float HEATING_THRESHOLD = 23.0;
+const float STABILIZING_LOW = 23.0;
+const float STABILIZING_HIGH = 25.0;
+const float TARGET_LOW = 25.0;
+const float TARGET_HIGH = 27.0;
+const float OVERHEAT_THRESHOLD = 30.0;
+
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+enum HeaterState {
+  IDLE,
+  HEATING,
+  STABILIZING,
+  TARGET_REACHED,
+  OVERHEAT
+};
+
+HeaterState currentState = IDLE;
+
+void setup() {
+  Serial.begin(9600);
+  sensors.begin();
+
+  pinMode(HEATER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  digitalWrite(HEATER_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(BUZZER_PIN, LOW);
+}
+
+void loop() {
+  sensors.requestTemperatures();
+  float tempC = sensors.getTempCByIndex(0);
+
+  if (tempC == DEVICE_DISCONNECTED_C) {
+    Serial.println("Error: DS18B20 sensor disconnected!");
+    delay(1000);
+    return;
+  }
+
+  // Determine current state based on temperature
+  if (tempC > OVERHEAT_THRESHOLD) {
+    currentState = OVERHEAT;
+  } else if (tempC >= TARGET_LOW && tempC <= TARGET_HIGH) {
+    currentState = TARGET_REACHED;
+  } else if (tempC >= STABILIZING_LOW && tempC < STABILIZING_HIGH) {
+    currentState = STABILIZING;
+  } else if (tempC < HEATING_THRESHOLD) {
+    currentState = HEATING;
+  } else {
+    currentState = IDLE;
+  }
+
+  // Control outputs based on state
+  switch (currentState) {
+    case HEATING:
+      digitalWrite(HEATER_PIN, HIGH);
+      digitalWrite(LED_PIN, HIGH);
+      digitalWrite(BUZZER_PIN, LOW);
+      break;
+
+    case STABILIZING:
+      digitalWrite(HEATER_PIN, LOW);
+      digitalWrite(LED_PIN, HIGH);
+      digitalWrite(BUZZER_PIN, LOW);
+      break;
+
+    case TARGET_REACHED:
+      digitalWrite(HEATER_PIN, LOW);
+      digitalWrite(LED_PIN, LOW);
+      digitalWrite(BUZZER_PIN, LOW);
+      break;
+
+    case OVERHEAT:
+      digitalWrite(HEATER_PIN, LOW);
+      digitalWrite(LED_PIN, HIGH);
+      digitalWrite(BUZZER_PIN, HIGH);
+      break;
+
+    case IDLE:
+    default:
+      digitalWrite(HEATER_PIN, LOW);
+      digitalWrite(LED_PIN, LOW);
+      digitalWrite(BUZZER_PIN, LOW);
+      break;
+  }
+
+  // Print status to Serial Monitor
+  Serial.print("Temperature: ");
+  Serial.print(tempC, 2);
+  Serial.print(" °C | State: ");
+  printState(currentState);
+  Serial.print(" | Heater: ");
+  Serial.print(digitalRead(HEATER_PIN) ? "ON" : "OFF");
+  Serial.print(" | LED: ");
+  Serial.print(digitalRead(LED_PIN) ? "ON" : "OFF");
+  Serial.print(" | Buzzer: ");
+  Serial.println(digitalRead(BUZZER_PIN) ? "ON" : "OFF");
+
+  delay(1000);
+}
+
+void printState(HeaterState state) {
+  switch (state) {
+    case IDLE: Serial.print("Idle"); break;
+    case HEATING: Serial.print("Heating"); break;
+    case STABILIZING: Serial.print("Stabilizing"); break;
+    case TARGET_REACHED: Serial.print("Target Reached"); break;
+    case OVERHEAT: Serial.print("Overheat"); break;
+  }
+}
